@@ -1,0 +1,297 @@
+<!DOCTYPE html><html>
+<head>
+<title>Browser Minesweeper Game</title>
+<link rel="stylesheet" type="text/css" href="a2.css">
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script>
+
+var w, h;
+var minesweeperArray = [];
+var minesweeperArrayUnclickable = [];
+var nm = 0;
+var userWon = false;
+
+$(document).ready(function(){
+	var display_div = $("#display");
+	var elapsed = 0;
+	var start_date = null;
+	var interval_timer = null;
+
+	var update_display = function (){
+		var to_display;
+		var now = new Date();
+		if(start_date != null){
+			to_display = "Time is: " + (elapsed + now.getTime() - start_date.getTime())/1000;
+		}
+		else{
+			to_display = "Time is: " +  elapsed/1000;
+		}
+		display_div.text(to_display.toString());
+	};
+	$("#start").click(function(){
+		var now = new Date();
+		if(start_date == null){
+			start_date = now;
+			$(this).text("Stop");
+			interval_timer = setInterval(update_display, 200);
+		}
+		else{
+			clearInterval(interval_timer);
+			elapsed += now.getTime() - start_date.getTime();
+			start_date = null;
+			$(this).text("Start");
+			update_display();
+		}
+	});
+	$("#reset").click(function() {
+		if(start_date != null){
+			start_date = new Date();
+		}
+		elapsed = 0;
+		update_display();
+	});
+});
+
+function arraymaker(width, height, numberMines){
+
+	w = width;
+	h = height;
+	nm = numberMines;
+	if(width < 8){
+		alert('Width must be greater than 7!');
+	}
+	if(height < 8){
+		alert('Height must be greater than 7!');
+	}
+	if(height > 30){
+		alert('Height must be no greater than 30!');
+	}
+	if(width > 40){
+		alert('Width must be no greater than 40!');
+	}
+	if(numberMines < 1){
+		alert('Number of mines must be greater than zero!');
+	}
+	if(numberMines > ((width * height) - 1)){
+		alert('Too many mines. Do you have a deathwish???');
+	}
+
+	//creates an array with all values of "no mines" (false)
+	var size = width * height;
+	var i = 0;
+	while(i < size){
+		minesweeperArray[i] = false;
+		minesweeperArrayUnclickable[i] = false;
+		i++;
+	}
+
+	//fills spaces with the proper number of "mines" (true)
+	i = 0;
+	while(i < numberMines){
+		var place = Math.floor(Math.random() * size);
+		if(minesweeperArray[place] == false){
+			minesweeperArray[place] = true;
+			i++;
+		}
+	}
+	
+	i = 0;
+	$('#table').append('<table border="1" style="width:100%">');
+	while(i < height){
+		var j = 0;
+		$('#table').append('<tr>')
+		while(j < width){
+			$('#table').append('<td id='+ (i * w + j) +' row="' + i + '" column="' + j + '">?</td>');
+			j++;
+		}
+		$('#table').append('</tr>');
+		i++;
+	}
+	$('#table').append('</table>');
+	$('td').bind('mousedown', makemove);
+
+}
+
+function makemove(event){
+	var row, column, totalnumber;
+	var targetId;
+	event.preventDefault();
+	targetId = event.target.id;
+	row = numtor(targetId);
+	column = numtoc(targetId);
+	totalnumber = (targetId);
+
+	//on right click
+	if(event.button == 2){
+		if(minesweeperArrayUnclickable[totalnumber] == false){
+			$('#' + totalnumber).empty();
+			$('#' + totalnumber).text( "X" );
+			minesweeperArrayUnclickable[totalnumber] = true;
+			nm--;
+		}
+		else{
+			$('#' + totalnumber).empty();
+			$('#' + totalnumber).text( "?" );
+			minesweeperArrayUnclickable[totalnumber] = false;
+			nm++;
+		}
+	}
+	
+	//on left click
+	else{
+		if(minesweeperArrayUnclickable[totalnumber] == true){
+			return;
+		}
+		else if(minesweeperArray[totalnumber] == true){
+			alert('You lose!');
+		}
+		else{
+			clickSimulator(totalnumber);
+		}
+						
+	}
+	$('#numberMinesRemaining').html('Number of Mines Remaining: ' + nm);
+	
+	function clickSimulator(cellNumber){
+		
+			minesweeperArrayUnclickable[cellNumber] = true;
+			var numbertodisplay = 0;
+			
+			if(rctonum(row-1, column-1) >= 0){
+				if(minesweeperArray[rctonum(row-1, column-1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row-1, column) >= 0){
+				if(minesweeperArray[rctonum(row-1, column)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row-1, column+1) >= 0){
+				if(minesweeperArray[rctonum(row-1, column+1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row, column-1) >= 0){
+				if(minesweeperArray[rctonum(row, column-1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row, column+1) >= 0){
+				if(minesweeperArray[rctonum(row, column+1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row+1, column-1) >= 0){
+				if(minesweeperArray[rctonum(row+1, column-1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row+1, column) >= 0){
+				if(minesweeperArray[rctonum(row+1, column)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(rctonum(row+1, column+1) >= 0){
+				if(minesweeperArray[rctonum(row+1, column+1)] == true){
+					numbertodisplay++;
+				}
+			}
+			if(numbertodisplay == 0){
+				if(rctonum(row-1, column-1) >= 0){
+					$('#' + rctonum(row-1, column-1)).mousedown();
+				}
+				if(rctonum(row-1, column) >= 0){
+					$('#' + rctonum(row-1, column)).mousedown();
+				}
+				if(rctonum(row-1, column+1) >= 0){
+					$('#' + rctonum(row-1, column+1)).mousedown();
+				}	
+				if(rctonum(row, column-1) >= 0){
+					$('#' + rctonum(row, column-1)).mousedown();
+				}
+				if(rctonum(row, column+1) >= 0){
+					$('#' + rctonum(row, column+1)).mousedown();
+				}
+				if(rctonum(row+1, column-1) >= 0){
+					$('#' + rctonum(row+1, column-1)).mousedown();
+				}
+				if(rctonum(row+1, column) >= 0){
+					$('#' + rctonum(row+1, column)).mousedown();
+				}
+				if(rctonum(row+1, column+1) >= 0){
+					$('#' + rctonum(row+1, column+1)).mousedown();
+				}
+			}
+			$('#' + cellNumber).text( numbertodisplay );
+	}
+	checkWin();
+}
+
+function checkWin(){
+	var i = 0;
+	var j = 0;
+	if(userWon){
+		return;
+	}
+	if(nm != 0){
+		return;
+	}
+	while(i < h){
+		while(j < w){
+			if(minesweeperArrayUnclickable[rctonum(i, j)] == false){
+				return;
+			}
+			j++;
+		}
+		i++;
+	}
+	userWon = true;
+	alert('You win!');
+}
+
+function reset(width, height, numberMine){
+	$('#table').empty();
+	arraymaker(width, height, numberMine);
+}
+
+function rctonum(row, column){
+	if(row < 0){
+		return -1;
+	}
+	else if(column < 0){
+		return -1;
+	}
+	else if((row >= h) || (column >= w)){
+		return -1;
+	}
+	return ((row * w) + column);
+}
+
+function numtor(num){
+	return Math.floor(num/w);
+}
+
+function numtoc(num){
+	return num % w;
+}
+
+</script>
+</head>
+<body>
+<form name="minefieldinputs" action="irrelevant_form_send.asp" method="get">
+Width of minefield: <input type="text" id="width">
+Height of a minefield: <input type="text" id="height">
+Number of mines: <input type="text" id="numberMines">
+<button type="button" id="start" onclick="arraymaker(document.getElementById('width').value, document.getElementById('height').value, document.getElementById('numberMines').value)">Start!</button>
+<button type="button" id="reset" onclick="reset(document.getElementById('width').value, document.getElementById('height').value, document.getElementById('numberMines').value)">Reset!</button>
+</form>
+<div id="display"></div>
+<div id="numberMinesRemaining"></div>
+<div id="table"></div>
+</body>
+
+
+
+
+
